@@ -1,5 +1,9 @@
 package ui;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,15 +11,15 @@ import java.util.List;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.ArcType;
+import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import model.*;
 import threads.*;
@@ -23,9 +27,10 @@ import threads.*;
 public class PacManController {
 
 	private Game gm;
-	private List<PacManThread> pacThreads;
-	
-    @FXML
+	private Stage stage;
+    private List<PacMan> pacMans;
+    private MoveThread pcT;
+	@FXML
     private Pane pane;
 	
     @FXML
@@ -41,7 +46,7 @@ public class PacManController {
     private MenuItem saveGame;
     
     @FXML
-    private Arc pac;
+    private ArrayList<Arc> arcPac;
     
     @FXML
     private Label rebotes;
@@ -66,45 +71,28 @@ public class PacManController {
     }
 
     @FXML
-    void level(ActionEvent event) throws ClassNotFoundException, IOException {
-    	gm= new Game();
-    	gm.importData("levels/lvl0");
-    	List<PacMan> pacM=gm.getPacMans();
-    	pacThreads= new ArrayList<PacManThread>(pacM.size());
-    	for(int i=0;i<pacThreads.size();i++){
-    		PacManThread pcT=new PacManThread(pacM.get(i).getDirection());
-    		pacThreads.add(pcT);
-    		pac = new Arc(pacM.get(i).getPosX(), pacM.get(i).getPosX(), pacM.get(i).getRadio(), pacM.get(i).getRadio(), 32, 300);
-    		pac.setFill(Color.YELLOW);
-    		pac.setStroke(Color.BLACK);
-    		pac.setStrokeWidth(3);
-    		pac.setType(ArcType.ROUND);
-    		pane.getChildren().add(pac);
-    		pacThreads.get(i).start();
-    	}
-    	
-    }
-
-    @FXML
-    void save(ActionEvent event) throws IOException, ClassNotFoundException {
-    	gm= new Game();
+    void save(ActionEvent event){
     	Scores[] can=gm.getScores();
     	int n=Integer.parseInt(nRebotes.getText());
     	for(int i=0;i<can.length && can[i]!=null;i++) {
     		if(n>can[i].getScore()) {
         		can[i].setScore(n);
-        		gm.save();
+        		try {
+					gm.save();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
         	}
     	}
-    	for(int i=0;i<pacThreads.size();i++) {
-    		pacThreads.get(i).s();
-    	}
-    	gm.exportCSV("data/save.txt");
+    	try {
+			gm.exportCSV("data/save.txt");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
     }
 
     @FXML
-    void showScores(ActionEvent event) throws ClassNotFoundException, IOException {
-    	gm= new Game();
+    void showScores(ActionEvent event){
     	Alert info = new Alert(AlertType.INFORMATION);
     	info.setTitle("PacMan");
     	info.setHeaderText(null);
@@ -113,52 +101,132 @@ public class PacManController {
     	info.show();
     }
     
-    public boolean rigth(boolean r) {
-    	if(r) {
-    		pac.setLayoutX(pac.getLayoutX()+6);
-    		pac.setRotate(pac.getRotate()+6);
-    		System.out.println("Derecha");
-    	}
-    	if(pac.getLayoutX()>=pane.getWidth()-pac.getRadiusX()) {
-			r = false;
+    
+    @FXML
+    void initialize() {
+    	try {
+    		arcPac= new ArrayList<Arc>();
+			gm= new Game();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		return r;
+    	ControlThread pacmt = new ControlThread(this);
+    	pacmt.setDaemon(true);
+    	pacmt.start();
     }
-    
-    public boolean left(boolean r) {
-    	if(!r) {
-    		pac.setLayoutX(pac.getLayoutX()-6);
-    		pac.setRotate(pac.getRotate()-6);
-    		System.out.println("Izquierda");
-    	}
-    	if(pac.getLayoutX()<=0) {
-			r = true;
-		}	
-		return r;
-    }
-    
-    public boolean up(boolean r) {
-    	if(!r) {
-    		pac.setLayoutY(pac.getLayoutY()-6);
-    		pac.setRotate(pac.getRotate()-6);
-    		System.out.println("Izquierda");
-    	}
-    	if(pac.getLayoutY()<=0) {
-			r = true;
-		}	
-		return r;
-    }
-    
-    public boolean down(boolean r) {
-    	if(r) {
-    		pac.setLayoutY(pac.getLayoutY()+6);
-    		pac.setRotate(pac.getRotate()+6);
-    		System.out.println("Derecha");
-    	}
-    	if(pac.getLayoutY()>=pane.getHeight()-pac.getRadiusY()) {
-			r = false;
+    @FXML
+    void level0(ActionEvent event) {
+    	try {
+
+			gm.importData("levels/lvl0");
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		return r;
+    	pacMans=gm.getPacMans();
+    	for(int i=0;i<pacMans.size();i++){
+    		Arc pac = new Arc(pacMans.get(i).getPosX(), pacMans.get(i).getPosY(), pacMans.get(i).getRadio(), pacMans.get(i).getRadio(), 32, 300);
+    		arcPac.add(pac);
+    		pac.setFill(Color.YELLOW);
+    		pac.setStroke(Color.BLACK);
+    		pac.setStrokeWidth(3);
+    		pac.setType(ArcType.ROUND);
+    	}
+    	
+    	for(int i=0;i<pacMans.size();i++){
+    		pane.getChildren().add(arcPac.get(i));
+    		pcT=new MoveThread(this,pacMans.get(i),true);
+    		pcT.setDaemon(true);
+    		pcT.start();
+    	}
+    }
+
+    @FXML
+    void level1(ActionEvent event) {
+    	try {
+
+			gm.importData("levels/lvl1");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	pacMans=gm.getPacMans();
+    	for(int i=0;i<pacMans.size();i++){
+    		Arc pac = new Arc(pacMans.get(i).getPosX(), pacMans.get(i).getPosY(), pacMans.get(i).getRadio(), pacMans.get(i).getRadio(), 32, 300);
+    		arcPac.add(pac);
+    		pac.setFill(Color.YELLOW);
+    		pac.setStroke(Color.BLACK);
+    		pac.setStrokeWidth(3);
+    		pac.setType(ArcType.ROUND);
+    	}
+    	
+    	for(int i=0;i<pacMans.size();i++){
+    		pane.getChildren().add(arcPac.get(i));
+    		pcT=new MoveThread(this,pacMans.get(i),true);
+    		pcT.setDaemon(true);
+    		pcT.start();
+    	}
+    }
+
+    @FXML
+    void level2(ActionEvent event) {
+    	try {
+			gm.importData("levels/lvl2");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	pacMans=gm.getPacMans();
+    	for(int i=0;i<pacMans.size();i++){
+    		Arc pac = new Arc(pacMans.get(i).getPosX(), pacMans.get(i).getPosY(), pacMans.get(i).getRadio(), pacMans.get(i).getRadio(), 32, 300);
+    		arcPac.add(pac);
+    		pac.setFill(Color.YELLOW);
+    		pac.setStroke(Color.BLACK);
+    		pac.setStrokeWidth(3);
+    		pac.setType(ArcType.ROUND);
+    	}
+    	
+    	for(int i=0;i<pacMans.size();i++){
+    		pane.getChildren().add(arcPac.get(i));
+    		pcT=new MoveThread(this,pacMans.get(i),true);
+    		pcT.setDaemon(true);
+    		pcT.start();
+    	}
+    }
+    public double getWith() {
+		return pane.getWidth();
+	}
+    
+    public double getHeigth() {
+		return pane.getHeight();
+	}
+    
+    public void setStage(Stage st) {
+    	stage = st;
+    }
+    
+    public void upThreads() throws ClassNotFoundException, IOException{  	
+    	int bounces=0;
+    	int suma=0;
+    	for (int id = 0; id < arcPac.size(); id++) {
+    		arcPac.get(id).setLayoutX(pacMans.get(id).getPosX());
+    		arcPac.get(id).setLayoutY(pacMans.get(id).getPosY());	
+    		arcPac.get(id).setLength(pacMans.get(id).getLength());	
+    		arcPac.get(id).setRotate(pacMans.get(id).getAngle());
+    	     suma=pacMans.get(id).getBounces();
+		}
+		bounces+=suma;
+		nRebotes.setText(""+bounces);
+
+    }
+   
+    @FXML
+    void stopPacMan(MouseEvent event) {
+        for(int i=0;i<pacMans.size();i++) {
+        	if(event.getX()<=pacMans.get(i).getPosX()+(pacMans.get(i).getRadio()*2)&& event.getX()>=pacMans.get(i).getPosX()) {
+        		pcT.stopsThread();
+            }
+        }
     }
 }
 

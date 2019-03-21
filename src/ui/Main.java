@@ -13,8 +13,12 @@ public class Main extends Application{
 	}
 	
 	public void start(Stage stage) throws Exception {
-		Parent root= FXMLLoader.load(getClass().getResource("GameMenu.fxml"));
-       	
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("GameMenu.fxml"));
+		Parent root = loader.load();
+		
+		PacManController pc = loader.getController();
+		pc.setStage(stage);
+		
        	Scene scene= new Scene(root);
        	stage.setTitle("PacMan");
        	stage.setScene(scene);

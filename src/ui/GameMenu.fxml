@@ -7,7 +7,7 @@
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.layout.Pane?>
 
-<Pane fx:id="pane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="420.0" prefWidth="624.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.PacManController">
+<Pane fx:id="pane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseClicked="#stopPacMan" prefHeight="420.0" prefWidth="624.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.PacManController">
    <children>
       <MenuBar layoutY="2.0" prefHeight="25.0" prefWidth="624.0">
         <menus>
@@ -15,9 +15,9 @@
             <items>
                   <Menu mnemonicParsing="false" text="Cargar juego">
                     <items>
-                      <MenuItem fx:id="lvl0" mnemonicParsing="false" onAction="#level" text="Nivel 0" />
-                        <MenuItem fx:id="lvl1" mnemonicParsing="false" onAction="#level" text="Nivel 1" />
-                        <MenuItem fx:id="lvl2" mnemonicParsing="false" onAction="#level" text="Nivel 2" />
+                      <MenuItem fx:id="lvl0" mnemonicParsing="false" onAction="#level0" text="Nivel 0" />
+                        <MenuItem fx:id="lvl1" mnemonicParsing="false" onAction="#level1" text="Nivel 1" />
+                        <MenuItem fx:id="lvl2" mnemonicParsing="false" onAction="#level2" text="Nivel 2" />
                     </items>
                   </Menu>
                   <MenuItem fx:id="saveGame" mnemonicParsing="false" onAction="#save" text="Guardar juego" />
